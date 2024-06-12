@@ -1,8 +1,56 @@
 ## NIVEL 1
+-- Ejercicio 1
+-- A partir de los documentos adjuntos (estructura_dades y dades_introduir), importa las dos 
+-- tablas. Muestra las caracterá­sticas principales del esquema creado y explica las diferentes 
+-- tablas y variables que existen. Asegurate de incluir un diagrama que ilustre la relación entre 
+-- las diferentes tablas y variables.
+
+    -- Creamos la base de datos
+    CREATE DATABASE IF NOT EXISTS transactions;
+    USE transactions;
+
+    -- Creamos la tabla company
+    CREATE TABLE IF NOT EXISTS company (
+        id VARCHAR(15) PRIMARY KEY,
+        company_name VARCHAR(255),
+        phone VARCHAR(15),
+        email VARCHAR(100),
+        country VARCHAR(100),
+        website VARCHAR(255)
+    );
+
+
+    -- Creamos la tabla transaction
+    CREATE TABLE IF NOT EXISTS transaction (
+        id VARCHAR(255) PRIMARY KEY,
+        credit_card_id VARCHAR(15) REFERENCES credit_card(id),
+        company_id VARCHAR(20), 
+        user_id INT REFERENCES user(id),
+        lat FLOAT,
+        longitude FLOAT,
+        timestamp TIMESTAMP,
+        amount DECIMAL(10, 2),
+        declined BOOLEAN,
+        FOREIGN KEY (company_id) REFERENCES company(id) 
+    );
+    
+   SHOW TABLES FROM transactions;
+   
+   DESC company;
+   DESC transaction;
+    
+    
+    
+    
+    
+    
+    
+
 
 -- Ejercicio 2.1 Listado de los paises que están haciendo compras.
+USE transactions;
 
-SELECT DISTINCT country FROM company
+SELECT DISTINCT company.country FROM company
 INNER JOIN transaction
 ON company.id = transaction.company_id;
 
@@ -10,7 +58,7 @@ ON company.id = transaction.company_id;
 
 -- Ejercicio 2.2 Desde cuantos paises se realizan las compras.
 
-SELECT count(DISTINCT country) as paises
+SELECT count(DISTINCT company.country) as paises
 FROM company
 INNER JOIN transaction
 ON company.id = transaction.company_id;
@@ -19,9 +67,11 @@ ON company.id = transaction.company_id;
 
 
 
+
+
 -- Ejercicio 2.3 Identifica la companyia amb la mitjana más gran de vendes.
 
-SELECT company.company_name as empresa, round(avg(amount),2) as media_ventas FROM company
+SELECT company_name as empresa, round(avg(amount),2) as media_ventas FROM company
 INNER JOIN transaction
 ON company.id = transaction.company_id
 WHERE declined = 0
@@ -50,7 +100,7 @@ SELECT company_id, max(amount) as maximo
 FROM transaction
 GROUP BY company_id
 HAVING maximo > (SELECT avg(amount) as mediaTotal
-				FROM transaction); 
+				FROM transaction);
 
 -- El resultado es 70 paises.
 
@@ -70,16 +120,15 @@ WHERE company.id NOT IN (SELECT DISTINCT transaction.company_id
 -- Ejercicio 1 Identifica los cinco días que se generó la mayor cantidad de ingresos en la empresa
 -- por ventas. Muestra la fecha de cada transacción junto con el total de las ventas.
 
-SELECT date(transaction.timestamp) as date, sum(transaction.amount) as total
-FROM company
-JOIN transaction
-ON company.id = transaction.company_id
+SELECT 	date(timestamp) AS date, 
+        sum(amount) AS total
+FROM transaction
 WHERE declined = 0
 GROUP BY date
 ORDER BY total DESC
 LIMIT 5;
 
-
+SELECT * FROM company;
 
 
 -- Ejercicio 2 ¿Cuál es el promedio de ventas por país? Presenta los resultados ordenados 
@@ -104,28 +153,46 @@ ORDER BY media desc;
 
 -- Utilizando JOINS y subqueries
 
-SELECT company.company_name, transaction.id, transaction.timestamp, transaction.amount
+SELECT company.company_name, 
+		transaction.user_id, 
+        transaction.id, 
+        transaction.lat, 
+        transaction.longitude, 
+        transaction.timestamp, 
+        transaction.amount, 
+        company.country
 FROM company
 INNER JOIN transaction
 ON company.id = transaction.company_id
-WHERE country = (SELECT country 
-				FROM company
-				WHERE company_name = 'Non Institute') and company_name <> 'Non Institute';
+WHERE company.country = (SELECT company.country 
+						FROM company
+						WHERE company.company_name = 'Non Institute');
                 
 -- El resultado es 70 transacciones
-
+SELECT * FROM transaction;
+SELECT * FROM company;
 
 -- Utilizando únicamente subqueries
 
-SELECT company.company_name, transaction.id, transaction.timestamp, transaction.amount
+SELECT company_name, 
+		user_id, 
+        transaction.id, 
+        lat, 
+        longitude, 
+        timestamp, 
+        amount, 
+        country
 FROM company, transaction
 WHERE country = (SELECT country 
 				FROM company
 				WHERE company_name = 'Non Institute') 
-                and company_name <> 'Non Institute'
                 and company.id = transaction.company_id;
                 
 -- El resultado es 70 transacciones
+
+SELECT * FROM transaction;
+SELECT * FROM company;
+
 
 
 
